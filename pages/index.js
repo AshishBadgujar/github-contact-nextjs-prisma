@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { PrismaClient } from '.prisma/client'
 import Head from 'next/head';
 import Axios from 'axios';
+import Image from 'next/image'
+import baseUrl from '../baseUrl'
 
 export default function Home({ contacts }) {
   const [fname, setfname] = useState('')
@@ -11,7 +13,7 @@ export default function Home({ contacts }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    let res = await Axios.post(`http://localhost:3000/api/contacts`, {
+    let res = await Axios.post(`${baseUrl}/api/contacts`, {
       firstName: fname,
       lastName: lname,
       email: email,
@@ -27,12 +29,12 @@ export default function Home({ contacts }) {
 
   const handleDelete = async (userId) => {
     try {
-      await Axios.delete(`http://localhost:3000/api/${userId}/delete`)
+      await Axios.delete(`${baseUrl}/api/${userId}/delete`)
     } catch (err) {
       console.log(err)
     }
-
   }
+
   return (
     <>
       <Head>
@@ -52,11 +54,11 @@ export default function Home({ contacts }) {
         </div>
         <div className="right p-3">
           {contacts.map(item => (
-            <div className="card mb-2" key={item.id}>
+            <div className="card mb-2 shadow-" key={item.id}>
               <div className="card-body">
                 <div className="card-inner-body">
                   <div>
-                    <img src={item.avatar} alt="profile" />
+                    <Image src={item.avatar} width={55} height={55} className="rounded-circle" alt="profile" />
                   </div>
                   <div className="ml">
                     <h5 className="card-title">{item.firstName}{item.lastName}</h5>
