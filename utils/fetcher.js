@@ -5,7 +5,7 @@ export const fetcher = async (url, data = undefined) => {
         method: data ? 'POST' : 'GET',
         data
     })
-    return res.data;
+    return res.data ? res.data : [];
 }
 
 

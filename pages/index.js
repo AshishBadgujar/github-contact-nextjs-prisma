@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { PrismaClient } from '.prisma/client'
 import Head from 'next/head';
 import Image from 'next/image'
 import baseUrl from '../baseUrl'
@@ -16,8 +15,7 @@ export default function Home() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(contacts)
-    fetcher('/api/contacts', {
+    await fetcher('/api/contacts', {
       firstName: fname,
       lastName: lname,
       email: email,
