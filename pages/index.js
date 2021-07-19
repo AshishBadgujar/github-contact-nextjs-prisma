@@ -1,38 +1,72 @@
 import React, { useState } from 'react'
 import { PrismaClient } from '.prisma/client'
 import Head from 'next/head';
-import Axios from 'axios';
 import Image from 'next/image'
 import baseUrl from '../baseUrl'
+import { useContact } from '../utils/hooks';
+import { mutate } from 'swr';
+import { deleter, fetcher } from '../utils/fetcher';
 
-export default function Home({ contacts }) {
+export default function Home() {
   const [fname, setfname] = useState('')
   const [lname, setlname] = useState('')
   const [email, setemail] = useState('')
   const [url, seturl] = useState('')
+  const { contacts } = useContact()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    let res = await Axios.post(`${baseUrl}/api/contacts`, {
+    console.log(contacts)
+    fetcher('/api/contacts', {
       firstName: fname,
       lastName: lname,
       email: email,
       avatar: url
     })
-    if (res.data.status) {
-      setfname('')
-      setlname('')
-      setemail('')
-      seturl('')
-    }
+    // we include "false" here to ask SWR not to revalidate the cache with
+    // the feed returned from the server. we'll remove this after the next section
+    mutate(
+      '/api/contacts',
+      [{
+        firstName: fname,
+        lastName: lname,
+        email: email,
+        avatar: url
+      }, ...contacts],
+      false
+    );
+    setfname('')
+    setlname('')
+    setemail('')
+    seturl('')
+
+    // let res = await Axios.post(`${baseUrl}/api/contacts`, {
+    //   firstName: fname,
+    //   lastName: lname,
+    //   email: email,
+    //   avatar: url
+    // })
+    // if (res.data.status) {
+    //   setfname('')
+    //   setlname('')
+    //   setemail('')
+    //   seturl('')
+    // }
   }
 
   const handleDelete = async (userId) => {
-    try {
-      await Axios.delete(`${baseUrl}/api/${userId}/delete`)
-    } catch (err) {
-      console.log(err)
-    }
+    mutate(
+      '/api/contacts',
+      contacts.filter(item => item.id != userId)
+      ,
+      false
+    );
+    deleter(`/api/${userId}/delete`)
+    // try {
+    //   await Axios.delete(`${baseUrl}/api/${userId}/delete`)
+    // } catch (err) {
+    //   console.log(err)
+    // }
   }
 
   return (
@@ -53,15 +87,15 @@ export default function Home({ contacts }) {
           </form>
         </div>
         <div className="right p-3">
-          {contacts.map(item => (
-            <div className="card mb-2 shadow-" key={item.id}>
+          {contacts && contacts.map((item, key) => (
+            <div className="card mb-2 shadow-" key={key}>
               <div className="card-body">
                 <div className="card-inner-body">
                   <div>
                     <Image src={item.avatar} width={55} height={55} className="rounded-circle" alt="profile" />
                   </div>
                   <div className="ml">
-                    <h5 className="card-title">{item.firstName}{item.lastName}</h5>
+                    <h5 className="card-title">{item.firstName} {item.lastName}</h5>
                     <p className="text-muted mb-0">{item.email}</p>
                   </div>
                 </div>
@@ -73,14 +107,4 @@ export default function Home({ contacts }) {
       </div>
     </>
   )
-}
-
-const prisma = new PrismaClient();
-export async function getServerSideProps() {
-  const contacts = await prisma.contact.findMany();
-  return {
-    props: {
-      contacts
-    }
-  }
 }
